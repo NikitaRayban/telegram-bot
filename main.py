@@ -1,5 +1,9 @@
-from aiogram import Bot, Dispatcher, types, executor
+from aiogram import Bot, Dispatcher, types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+from aiogram.utils import executor
+import threading
+import asyncio
+from aiohttp import web
 
 API_TOKEN = '7675637455:AAHoyrmpuCpXsTUobb8MOmJxTP3a2cyC6bc'
 
@@ -70,6 +74,24 @@ async def contact(msg: types.Message):
 async def echo(msg: types.Message):
     await msg.answer("❗ Пожалуйста, выберите действие из меню.")
 
-# === Запуск бота ===
-if __name__ == '__main__':
+# === Функция запуска Telegram-бота ===
+def start_bot():
     executor.start_polling(dp, skip_updates=True)
+
+# === HTTP-сервер для Render (фейковый) ===
+async def handle(request):
+    return web.Response(text="Bot is running!")
+
+async def start_web_app():
+    app = web.Application()
+    app.router.add_get("/", handle)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, "0.0.0.0", 10000)
+    await site.start()
+    print("HTTP server started on port 10000")
+
+# === Точка входа ===
+if __name__ == '__main__':
+    threading.Thread(target=start_bot).start()
+    asyncio.run(start_web_app())
